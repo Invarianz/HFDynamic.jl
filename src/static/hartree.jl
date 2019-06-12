@@ -24,8 +24,8 @@ Perform a Hartree fock cycle for given temperature and interaction strength.
 - `u::AbstractFloat`: Interaction strength
 - `temp::AbstractFloat`: Temperature of the system
 - `ham0::Matrix{T}`: Real or complex Hamiltonian with alternating ↑↓ spin ordering
-- `rhostart::Matrix{T}`: Real or complex Density matrix; is used to break the initial
-field configuration symmetry.
+- `rhostart::Matrix{T}`: Real or complex Density matrix; is used to break the initial 
+    field configuration symmetry.
 """
 function hfcycle(n::Integer, u::AbstractFloat, temp::AbstractFloat, ham0::Matrix{T};
                  rhostart::Matrix{T}) where T<:Number
