@@ -2,6 +2,8 @@ module HFDynamic
 
 using LinearAlgebra
 using Statistics
+using GeometryTypes
+using Makie
 
 export matdiag, matdiag!
 export occupation, canonicaldensmat!
