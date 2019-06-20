@@ -11,7 +11,7 @@ const ENERGY_TOL = 1e-8
 
 Mixing factor between old and new density matrix. Crucial for convergence.
 """
-const DENSITY_MIXING = 0.60
+const DENSITY_MIXING = 0.80
 
 
 """
