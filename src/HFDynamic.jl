@@ -8,7 +8,7 @@ using Makie
 export matdiag, matdiag!
 export occupation, canonicaldensmat!
 export temperature, interaction, electrons
-export hfcycle
+export hfcycle, hfcycle_new
 
 include("builder/tools.jl")
 include("builder/lattice.jl")
