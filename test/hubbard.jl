@@ -63,13 +63,13 @@ phasediagram_explicit()
     X = 32
     H = hubbard(X)
 
-    Trange = 0.00:0.50:1.00
-    urange = 0.00:0.20:8.00
+    Trange = 0.00:0.50:0.00
+    urange = 6.50:0.20:6.50
 #    Trange = 0.1:0.5:4.0
 #    urange = 0.25:5.0:12
 
-    rho = matdiag(0.60, 2*X, 2*X, sr=1, sc=1, step=2) +
-          matdiag(0.40, 2*X, 2*X, sr=2, sc=2, step=2)
+    rho = matdiag(0.70, 2*X, 2*X, sr=1, sc=1, step=2) +
+          matdiag(0.30, 2*X, 2*X, sr=2, sc=2, step=2)
 
     etotal = zeros(Float64, size(Trange, 1), size(urange, 1))
     hartree = zeros(Float64, size(Trange, 1), size(urange, 1))
@@ -107,6 +107,41 @@ phasediagram_explicit()
 #    ylabel(L"\mathrm{T} [t]")
 #    cbar = colorbar()
 #    cbar.ax.set_ylabel(L"\mathrm{staggered } m")
+end
+
+function
+teststart()
+    X = 52
+    H = hubbard(X)
+
+    T = 0.00
+    u = 4.50
+
+    startrange = 0:0.01:0.5
+    etotal = zeros(Float64, size(startrange, 1))
+    hartree = zeros(Float64, size(startrange, 1))
+    neelmag = zeros(Float64, size(startrange, 1))
+    magnetisation = zeros(Float64, size(startrange, 1))
+
+    for (i, s) in enumerate(startrange)
+        rho = matdiag(1-s, 2*X, 2*X, sr=1, sc=1, step=2) +
+              matdiag(s, 2*X, 2*X, sr=2, sc=2, step=2)
+
+
+        etot, hfetot, hfrho = hfcycle(X, u, T, H, rhostart=rho)
+
+        etotal[i] = etot
+        hartree[i] = hfetot
+        # Get spin by subtracting ↑ from ↓ density
+        hfrho = hfrho[1:2:end] - hfrho[2:2:end]
+        # println(size(magnetisation), " ", size(sum(hfrho, dims=2)))
+        magnetisation[i] = sum(hfrho)
+        # Staggered magnetism to find antiferromagnetic order
+        hfrho[1:2:end] .*= -1
+        neelmag[i] = sum(hfrho[1:X ÷ 2])
+        println("Done")
+    end
+    plot(startrange, etotal)
 end
 
 end #module
