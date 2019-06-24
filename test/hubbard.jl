@@ -24,8 +24,8 @@ phasediagram()
 #    Trange = 0.1:0.5:4.0
 #    urange = 0.25:5.0:12
 
-    rho = matdiag(0.20, 2*X, 2*X, sr=1, sc=1, step=2) +
-          matdiag(0.80, 2*X, 2*X, sr=2, sc=2, step=2)
+    rho = matdiag(0.50, 2*X, 2*X, sr=1, sc=1, step=2) +
+          matdiag(0.50, 2*X, 2*X, sr=2, sc=2, step=2)
 
     neelmag = zeros(Float64, size(Trange, 1), size(urange, 1))
     magnetisation = zeros(Float64, size(Trange, 1), size(urange, 1))
@@ -60,26 +60,28 @@ end
 
 function
 phasediagram_explicit()
-    X = 41
+    X = 32
     H = hubbard(X)
 
     Trange = 0.00:0.50:1.00
-    urange = 0.20:1.20:10.00
+    urange = 0.00:0.20:8.00
 #    Trange = 0.1:0.5:4.0
 #    urange = 0.25:5.0:12
 
-    rho = matdiag(0.80, 2*X, 2*X, sr=1, sc=1, step=2) +
-          matdiag(0.20, 2*X, 2*X, sr=2, sc=2, step=2)
+    rho = matdiag(0.60, 2*X, 2*X, sr=1, sc=1, step=2) +
+          matdiag(0.40, 2*X, 2*X, sr=2, sc=2, step=2)
 
     etotal = zeros(Float64, size(Trange, 1), size(urange, 1))
+    hartree = zeros(Float64, size(Trange, 1), size(urange, 1))
     neelmag = zeros(Float64, size(Trange, 1), size(urange, 1))
     magnetisation = zeros(Float64, size(Trange, 1), size(urange, 1))
 
     for (i, T) in enumerate(Trange), (j, u) in enumerate(urange)
         println("Doing T: ", T, " u: ", u)
-        etot, dummy, hfrho = hfcycle_new(X, u, T, H, rhostart=rho)
+        etot, hfetot, hfrho = hfcycle(X, u, T, H, rhostart=rho)
 
         etotal[i, j] = etot
+        hartree[i, j] = hfetot
         # Get spin by subtracting ↑ from ↓ density
         hfrho = hfrho[1:2:end] - hfrho[2:2:end]
         # println(size(magnetisation), " ", size(sum(hfrho, dims=2)))
@@ -90,6 +92,7 @@ phasediagram_explicit()
         println("Done")
     end
     plot(urange, transpose(etotal))
+#    plot(Trange, hartree)
 #    display(magnetisation)
 #    display(neelmag)
 #    subplot(211)
@@ -104,39 +107,6 @@ phasediagram_explicit()
 #    ylabel(L"\mathrm{T} [t]")
 #    cbar = colorbar()
 #    cbar.ax.set_ylabel(L"\mathrm{staggered } m")
-end
-
-function
-main()
-    H = hubbard(50)
-    # temperature(H, hcycle; ne=50, u=1.0, Tmin=0.0, Tmax=1.0, runs=100)
-    urange = range(0.20, step=0.20, stop=4.0)
-    # henergies, hinter, hrho = interaction(H, hcycle; ne=50, urange=urange, T=0.2)
-    rho = matdiag(0.49, 100, 100, sc=1, step=2) + matdiag(0.51, 100, 100, sr=2, sc=2, step=2)
-   # hfenergies, hfinter, hfrho = interaction(H, hfcycle; rhostart=rho,
-   #                                          ne=50, urange=urange, T=0.2)
-   #Trange = urange
-   hfenergies, hfinter, hfrho = temperature(H, hfcycle; rhostart=rho,
-                                            ne=50, u=7.0, Trange=Trange)
-
-    # Make the spin ↓ contribution negative
-    hfrho[:, 2:2:end] .*= -1
-
-    display(hfrho[17, :])
-    display(sum(hfrho[17, :]))
-    plot(urange, sum(hfrho, dims=2))
-    xlabel(L"U [t]")
-    ylabel(L"\rho_\uparrow - \rho_\downarrow")
-#    display(hfrho[2, :])
-#    subplot(211)
-#    display(sum(hfrho[2, :]))
-#    plot(1:50, transpose(reshape(hfrho[2, :], 2, 50)))
-#    legend([L"\uparrow", L"\downarrow"])
-#
-#    subplot(212)
-#    display(sum(hfrho[14, :]))
-#    plot(1:50, transpose(reshape(hfrho[10, :], 2, 50)))
-#    legend([L"\uparrow", L"\downarrow"])
 end
 
 end #module

@@ -17,15 +17,15 @@ function
 occupation(npa::Integer, temp::T,
            en::Array{T, 1}) where T<:AbstractFloat
 
+    # Estimate μ as Fermi energy at T=0
+    muest = (en[npa] + en[npa + 1])/2
+
     # Zero temperature solution
     if temp ≤ eps(temp)
         occ = zeros(size(en, 1))
         occ[1:npa] .= 1.0
-        return occ
+        return muest, occ
     end
-
-    # Estimate μ as Fermi energy at T=0
-    muest = en[npa]
 
     # Minmum and maximum energies
     bandwidth = abs(en[end] - en[1])
@@ -37,8 +37,8 @@ occupation(npa::Integer, temp::T,
     occ = map(e -> f(e, muest), en)
     npathermal = sum(occ)
 
-    while abs(npathermal - npa) ≥ OCCUPATION_TOL
-        if npathermal - npa > 0
+    while abs(npathermal - float(npa)) ≥ OCCUPATION_TOL
+        if npathermal - float(npa) > 0
             mumax = muest
             muest = (muest + mumin)/2
         else
@@ -49,7 +49,8 @@ occupation(npa::Integer, temp::T,
         occ = map(e -> f(e, muest), en)
         npathermal = sum(occ)
     end
-    return occ
+
+    return muest, occ
 end
 
 
