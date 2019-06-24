@@ -86,3 +86,61 @@ function hfcycle(n::Integer, u::AbstractFloat, temp::AbstractFloat, ham0::Matrix
     end
     return etotal, dmu, real.(rho[1:diaj:end])./u
 end
+
+function hfcycle_new(n::Integer, u::AbstractFloat, temp::AbstractFloat, ham0::Matrix{T};
+                 rhostart::Matrix{T}) where T<:Number
+    dim = size(ham0, 1)
+    diaj = dim+1
+
+    uhf = zeros(T, size(ham0))
+    rho = copy(rhostart)
+    rhoold = copy(rhostart)
+    ham = copy(ham0)
+
+    etotal = Float64(10e5)
+    etotalold = 0
+    dmu = 0
+
+    itr = 1
+    while abs(etotal - etotalold) > ENERGY_TOL
+        etotalold = etotal
+        itr += 1
+
+        # We only write on the upper tridiagonal due to Hermiticity
+        # Add the Hartree term
+        # ↑↑ <↓↓>
+        uhf[1:2*diaj:end] .= @view rho[1+diaj:2*diaj:end]
+
+        # ↓↓ <↑↑>
+        uhf[1+diaj:2*diaj:end] .= @view rho[1:2*diaj:end]
+
+        # Add the Fock term
+        # ↑↓ <↓↑>; ↓↑ <↑↓> is implicit due to Hermiticity
+        # Only write upper!! half of uhf (above we use Hermitian(ham, :U))
+        uhf[2:2*diaj:end] .= @view rho[diaj:2*diaj:end]
+
+        ham = ham0 + u .* uhf
+
+        # Constant Hartree and Fock term
+        # mean( <↑↑> <↓↓> + <↑↓> <↓↑> )
+        dmu = mean(real.(rho[1:2*diaj:end]) .* real.(rho[1+diaj:2*diaj:end]) .+
+                   real.(rho[2:2*diaj:end]) .* real.(rho[diaj:2*diaj:end]))
+
+        # modulates "global" chem. potential
+        ham[1:diaj:end] .-= dmu
+
+        eigsys = eigen!(Hermitian(ham, :U))
+
+        # From the occupation calculate new energy
+        occ = occupation(n, temp, eigsys.values)
+        etotal = sum(occ .* eigsys.values)
+
+        # Density matrix (gives microcanonical if temp=0)
+        canonicaldensmat!(rho, occ, eigsys.vectors)
+
+        # Linear mixing
+        rho .= (1 - DENSITY_MIXING) * rho + DENSITY_MIXING * rhoold
+        rhoold .= rho
+    end
+    return etotal, dmu, real.(rho[1:diaj:end])
+end
