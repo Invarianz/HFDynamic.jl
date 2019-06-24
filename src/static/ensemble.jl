@@ -24,7 +24,7 @@ occupation(npa::Integer, temp::T,
     if temp ≤ eps(temp)
         occ = zeros(size(en, 1))
         occ[1:npa] .= 1.0
-        return muest, occ
+        return occ
     end
 
     # Minmum and maximum energies
@@ -50,7 +50,7 @@ occupation(npa::Integer, temp::T,
         npathermal = sum(occ)
     end
 
-    return muest, occ
+    return occ
 end
 
 

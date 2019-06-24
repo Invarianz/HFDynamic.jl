@@ -41,13 +41,11 @@ function hfcycle(n::Integer, u::AbstractFloat, temp::AbstractFloat, ham0::Matrix
     etotalold = 0
 
     # Constant Hartree and Fock term
-    # mean( <↑↑> <↓↓> + <↑↓> <↓↑> )
-    dmu = mean(real.(rho[1:2*diaj:end]) .* real.(rho[1+diaj:2*diaj:end]) .+
-                real.(rho[2:2*diaj:end]) .* real.(rho[diaj:2*diaj:end]))
-    dmu *= u
+    dmu = 0
 
     itr = 1
     while abs(etotal - etotalold) > ENERGY_TOL
+        println(etotal)
         etotalold = etotal
         itr += 1
 
@@ -66,18 +64,21 @@ function hfcycle(n::Integer, u::AbstractFloat, temp::AbstractFloat, ham0::Matrix
         # Add the Fock term
         # ↑↓ <↓↑>; ↓↑ <↑↓> is implicit due to Hermiticity
         # Only write upper!! half of uhf (above we use Hermitian(ham, :U))
-        uhf[2:2*diaj:end] .= @view rho[diaj:2*diaj:end]
+        uhf[diaj:2*diaj:end] .= @view rho[2:2*diaj:end]
 
         ham = ham0 + u .* uhf
 
+        # mean( <↑↑> <↓↓> + <↑↓> <↓↑> )
+        dmu = u * mean(real.(rho[1:2*diaj:end]) .* real.(rho[1+diaj:2*diaj:end]) .+
+                       real.(rho[2:2*diaj:end]) .* real.(rho[diaj:2*diaj:end]))
 
         # modulates "global" chem. potential
-#        ham[1:diaj:end] .-= dmu
+        ham[1:diaj:end] .-= dmu
 
         eigsys = eigen!(Hermitian(ham, :U))
 
         # From the occupation calculate new energy
-        dmu, occ = occupation(n, temp, eigsys.values)
+        occ = occupation(n, temp, eigsys.values)
 
         etotal = sum(occ .* eigsys.values)
 
