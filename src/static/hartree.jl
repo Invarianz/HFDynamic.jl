@@ -36,6 +36,7 @@ function hfcycle(n::Integer, u::AbstractFloat, temp::AbstractFloat, ham0::Matrix
     rho = copy(rhostart)
     rhoold = copy(rhostart)
     ham = copy(ham0)
+    occ = zeros(Float64, dim)
 
     etotal = Float64(10e5)
     etotalold = 0
@@ -45,7 +46,6 @@ function hfcycle(n::Integer, u::AbstractFloat, temp::AbstractFloat, ham0::Matrix
 
     itr = 1
     while abs(etotal - etotalold) > ENERGY_TOL
-        println(etotal)
         etotalold = etotal
         itr += 1
 
@@ -78,12 +78,13 @@ function hfcycle(n::Integer, u::AbstractFloat, temp::AbstractFloat, ham0::Matrix
         eigsys = eigen!(Hermitian(ham, :U))
 
         # From the occupation calculate new energy
-        occ = occupation(n, temp, eigsys.values)
+        occ .= occupation(n, temp, eigsys.values)
 
         etotal = sum(occ .* eigsys.values)
 
         # Density matrix (gives microcanonical if temp=0)
         canonicaldensmat!(rho, occ, eigsys.vectors)
     end
+    println(occ)
     return etotal, u*dmu, real.(rho[1:diaj:end])
 end

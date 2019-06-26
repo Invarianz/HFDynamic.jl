@@ -111,7 +111,7 @@ end
 
 function
 teststart()
-    X = 52
+    X = 32
     H = hubbard(X)
 
     T = 0.00
